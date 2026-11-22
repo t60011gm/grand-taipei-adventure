@@ -1,0 +1,33 @@
+// Taipei PTO GetStop, WGS84, 2026-11-21. Positions in local survey metres.
+export const stopsByLane={
+ "tourSurface-1":[
+  {"name":"市民林森路口","id":35430,"seq":20,"x":341.35,"n":606.52,"route":"669","destination":"市政府","pgp":null,"curbN":604.23},
+  {"name":"華山公園(市民)","id":35431,"seq":21,"x":665.54,"n":539.73,"route":"669","destination":"市政府","pgp":null,"curbN":541.86},
+  {"name":"華山公園(市民大道一)","id":35432,"seq":22,"x":884.79,"n":469.39,"route":"669","destination":"市政府","pgp":null,"curbN":468.58},
+  {"name":"光華商場","id":35433,"seq":23,"x":1175.13,"n":375.84,"route":"669","destination":"市政府","pgp":null,"curbN":380.69},
+  {"name":"懷生國宅","id":35434,"seq":24,"x":1586.6,"n":271.19,"route":"669","destination":"市政府","pgp":null,"curbN":272.4},
+  {"name":"忠泰美術館","id":35435,"seq":25,"x":1756.01,"n":260.32,"route":"669","destination":"市政府","pgp":"-1","curbN":261.39},
+  {"name":"懷生國小","id":35436,"seq":26,"x":2186.91,"n":242.41,"route":"669","destination":"市政府","pgp":null,"curbN":245.63},
+  {"name":"微風廣場","id":35437,"seq":27,"x":2535.11,"n":275.83,"route":"669","destination":"市政府","pgp":null,"curbN":288.28},
+  {"name":"市民敦化路口","id":35438,"seq":28,"x":3151.09,"n":246.42,"route":"669","destination":"市政府","pgp":"-1","curbN":245.12}
+ ],
+ "GFsurfaceG1":[
+  {"name":"臺北市區監理所(光復)","id":18308,"seq":31,"x":3838.97,"n":523.97,"route":"204","destination":"麥帥新城","pgp":null,"curbX":3835.88},
+  {"name":"榮民服務處","id":18310,"seq":32,"x":3839.6,"n":714.84,"route":"204","destination":"麥帥新城","pgp":null,"curbX":3839.79}
+ ],
+ "tourSurface1":[
+  {"name":"市民敦化路口","id":35458,"seq":47,"x":2816.98,"n":323.13,"route":"669","destination":"三重","pgp":"-1","curbN":318.97},
+  {"name":"微風廣場","id":35459,"seq":48,"x":2585.27,"n":315.49,"route":"669","destination":"三重","pgp":null,"curbN":324.81},
+  {"name":"市民復興路口","id":35460,"seq":49,"x":2340.2,"n":298.25,"route":"669","destination":"三重","pgp":null,"curbN":297.22},
+  {"name":"懷生國小","id":35461,"seq":50,"x":2210.05,"n":279.04,"route":"669","destination":"三重","pgp":null,"curbN":282.31},
+  {"name":"忠泰美術館","id":35462,"seq":51,"x":1793.05,"n":290.67,"route":"669","destination":"三重","pgp":"-1","curbN":293.19},
+  {"name":"懷生國宅","id":35463,"seq":52,"x":1570.89,"n":305.5,"route":"669","destination":"三重","pgp":null,"curbN":307.76},
+  {"name":"光華商場","id":35464,"seq":53,"x":1185.77,"n":405.07,"route":"669","destination":"三重","pgp":null,"curbN":411.06},
+  {"name":"華山公園(市民大道一)","id":35465,"seq":54,"x":880.02,"n":506.24,"route":"669","destination":"三重","pgp":null,"curbN":503.84},
+  {"name":"華山公園(市民)","id":35466,"seq":55,"x":679.19,"n":569.38,"route":"669","destination":"三重","pgp":null,"curbN":571.34},
+  {"name":"市民林森路口","id":35467,"seq":56,"x":331.48,"n":638.64,"route":"669","destination":"三重","pgp":null,"curbN":638.48}
+ ],
+ "GFsurfaceG-1":[
+  {"name":"臺北市區監理所(光復)","id":18202,"seq":66,"x":3818.23,"n":594.86,"route":"204","destination":"東園","pgp":null,"curbX":3813.73}
+ ]
+}

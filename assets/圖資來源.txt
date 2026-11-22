@@ -1,0 +1,178 @@
+市民大道三區現況基地　｜　2026-11-19 製作
+打開「市民大道三區.blend」可編輯全區。場景內設有華山、市民八德、市民敦化及全區四部相機。相機附設於檢視相機集合。三張區域鳥瞰及敦化街道視角均由模型直接渲染。
+
+空間與單位
+Blender 使用公尺，X 向東、Y 向北、Z 向上。水平原點為 WGS84 東經 121.519900°、北緯 25.042250°。在北緯 25.0467° 以 WGS84 橢球的經緯圈半徑換算至局部公尺平面；官方模型的 EGM96 高程扣除 5 公尺。底圖的東北角為東經 121.555600°、北緯 25.051100°。這個約 3.60 × 0.98 公里的矩形是製作範圍，含三區之間及兩側的街廓。底圖地表採固定標高，區外緣及來源接縫可有高差。
+華山.glb、市民八德.glb、市民敦化.glb 均為 glTF 2.0，各自內嵌貼圖。將三個分區放在同一原點、採相同匯入比例即可對齊。GLB 已套用 glTF 的 Y-up 約定，使用引擎的標準 glTF 匯入器即可。圖磚按中心歸入分區，交界上的圖磚可能跨區。
+主線道路碰撞面.glb 內含平面、高架兩個低面數、向上單面的網格。可在引擎中將二者指定為靜態三角網格碰撞並隱藏外觀。此檔供主線車輛原型測試，路寬按車道數、縱坡依實景取樣或推估；路口銜接、橋下淨高、匝道、騎樓及人行動線仍需逐段試車和校正。
+
+資料與建模
+1. 臺北市政府都市發展局歷史圖資展示系統。市民大道沿線 mesh_202504 為 Bentley ContextCapture 實景網格，本案選取 212 個不同細緻度圖磚，沿用原始幾何與攝影貼圖。服務更新於 2025-08-24，該日期是服務時間戳，拍攝日期未逐磚確認。LOD1_2025 用於實景帶以外的建物輪廓與屋頂高度。建物在 Blender 以圖資要素拆分；附屬量體亦可能單獨成件。實景帶中心與周邊白模的分界依幾何覆蓋推算。
+https://www.historygis.udd.gov.taipei/arcgis/rest/services/Hosted/mesh_202504/SceneServer/layers/0
+https://www.historygis.udd.gov.taipei/arcgis/rest/services/Hosted/LOD1_2025/SceneServer/layers/0
+https://udd.gov.taipei/QA/article/ngork7d
+2. 內政部國土測繪中心「臺灣通用正射影像」PHOTO2，原影像保留浮水印，預覽可見 NLSC 2024。用於地表及 LOD1 屋頂垂直投影；建築外牆使用另製的示意材質。
+https://maps.nlsc.gov.tw/S09SOA/pro/Wms_ajax_main.jsp
+3. © OpenStreetMap contributors，ODbL 1.0。使用道路中心線、車道與高架標籤、公園範圍與已標記樹位。華山橋面、護欄、橋墩、標線與樹形為程序化重建。額外公園樹冠依影像色彩及公園邊界推估。
+https://www.openstreetmap.org/copyright
+4. 「城市縫合」政策 PDF 第 13、19、26 頁界定三區。規劃中的市集、廣場及新設陸橋均未加入現況模型。
+https://puma.taipei/policies/城市縫合-點亮市民大道
+
+現況可信度與公開發行
+此版適合街廓尺度、動線原型、鳥瞰以及中距離場景開發。華山與實景帶外側的窗、材質、街道設施和樹冠均有推估成分；原始實景的橋下、騎樓、車輛與樹蔭有遮蔽、黏連、拉伸或孔洞。未逐戶核對 2026 年店招和裝修，也未完成地面測量與引擎實車驗收。敦化街道視角保留了這些限制，供近景製作評估。
+公開介接說明與本案離線遊戲資產的再散布用途不同。正式發行前請向圖資提供機關確認內嵌原始影像及網格的使用範圍，保留來源、浮水印及 OSM 署名。
+
+新生、建國與市民高架交會及停車設施
+道路平面線形、匝道分岔與服務車道採用 OpenStreetMap 道路節點。兩條橫向高架的遊戲模型涵蓋市民大道交會處南北各約三百公尺及相鄰出入口。建模以遊戲既有地面為基準，依街景與圖資層級調整橋面淨空、坡度與防撞設施，未經工程測量。
+停車入口依臺北市停車場資訊的 EntranceCoord 欄位、現有車道線形及 Google 街景交叉定位。延吉段南側入口採東向街景補建。地下範圍至閘門後短段，閘機採遊戲車輛感應方式。平面停車格、車輛與設備為場景重建。
+市府停車場資訊 https://tcgbusfs.blob.core.windows.net/blobtcmsv/TCMSV_alldesc.json
+臺北市交通管制工程處快速道路、高架橋出入口資料 https://bote.gov.taipei/News.aspx?n=90DD73D402D074A3&sms=51393A9266005E44
+臺北市交通資訊無障礙網（市民大道建復段停車場） https://atis.taipei.gov.tw/aspx/park/parkF.aspx?lang=zh-Hant-TW&region=%E4%B8%AD%E5%B1%B1%E5%8D%80&sn=TPE0109
+
+建國橋下街廓及復敦段補充
+建國南北路沿街量體依 OpenStreetMap 建物輪廓重建。建國北路一段東西兩側門廳、街樹、店面及鋪面以 Google 街景可見特徵建模。未標示的樓高、門窗細部與材質依立面比例估算。
+建國北路一段東側街景 https://www.google.com/maps/@25.0468282,121.5369546,0a,73.7y,90h,95t/data=!3m4!1e1!3m2!1sfIG0pDZe7rtKGGvoumrSHA!2e0
+建國北路一段西側街景 https://www.google.com/maps/@25.0468502,121.5364138,0a,73.7y,270h,95t/data=!3m4!1e1!3m2!1s3WHEXfoDeRUVrXK1OJl8rQ!2e0
+復敦段橋下風口採用市府地面層示意圖及地面街景，圖上相對位置換算為模型坐標，非竣工測量位置。
+臺北市政府「市民大道復敦段停車場－地面層示意圖」 https://www-ws.gov.taipei/Download.ashx?icon=..pdf&n=MDctMy0y5biC5rCR5aSn6YGT5b6p5pWm5q6156S65oSP5ZyWKOiqv%2BaVtOW%2BjCkucGRm&u=LzAwMS9VcGxvYWQvNDU1L3JlbGZpbGUvMjI0NzcvODE5NzE1NS8yMDUyMWQwNy1mNDkwLTQzMWYtOTFhZS00NGJlZGU3YjNhOGEucGRm
+
+市民高架匝道橋下仰視核對（方位自正北順時針；遊戲相機離地估計 2.5 m）
+新生南路聯絡匝道 https://www.google.com/maps/@?api=1&map_action=pano&pano=CATee5R8H39HhsngkRvsww&heading=85&pitch=18&fov=80
+建國南路聯絡匝道 https://www.google.com/maps/@?api=1&map_action=pano&pano=XrffEieanJBacXdxbKxAXg&heading=265&pitch=19&fov=80
+光復南路出口引道 https://www.google.com/maps/@?api=1&map_action=pano&pano=geog7otu33xHoQtv1qtVFg&heading=85&pitch=14&fov=80
+
+華山至光復南路橋面往返。四個全景使用實際座標及方位，實機攝影機離橋面 2.45 m 為估計值。
+新生東向 https://www.google.com/maps/@25.0471628,121.5266566,0a,73.7y,108h,90t/data=!3m4!1e1!3m2!1sIqMoqnejEvUAX8WLPnIIfg!2e0?source=apiv3
+新生西向 https://www.google.com/maps/@25.0471363,121.5272499,0a,73.7y,282h,90t/data=!3m4!1e1!3m2!1sJT6iM85-NLXJWSrv_y2oCA!2e0?source=apiv3
+建國東向 https://www.google.com/maps/@25.0445313,121.5418538,0a,73.7y,88h,90t/data=!3m4!1e1!3m2!1sswz4MuKb8S12kyQJWJe6oQ!2e0?source=apiv3
+光復東向 https://www.google.com/maps/@25.0445068,121.5514954,0a,73.7y,106h,90t/data=!3m4!1e1!3m2!1slFS1HilE1hySXtlVdbrRPA!2e0?source=apiv3
+光復南路回程道路中心線、單行方向與路口轉向資料 © OpenStreetMap 貢獻者（ODbL） https://www.openstreetmap.org/#map=17/25.0463/121.5578
+
+光復南路出口、八德路口及西向入口。形體、號誌和招牌以街景可見部分為據，街廓、路形與可辨建築參照 OpenStreetMap。立面尺寸及路側物件位置為遊戲估算，號誌呈現取景相位。
+https://www.google.com/maps/@25.0445478,121.5553222,0a,73.7y,78h,90t/data=!3m4!1e1!3m2!1slR7xbys52-z-pctpHvDH-w!2e0?source=apiv3
+https://www.google.com/maps/@25.044835,121.5565559,0a,73.7y,77h,90t/data=!3m4!1e1!3m2!1sgmzjFyn9bo71-_akLPLTpQ!2e0?source=apiv3
+https://www.google.com/maps/@25.0451091,121.5573911,0a,73.7y,76h,90t/data=!3m4!1e1!3m2!1sAQbbZ9NaVQPb8JRPY5vZgw!2e0?source=apiv3
+https://www.google.com/maps/@25.0455685,121.557821,0a,73.7y,1h,90t/data=!3m4!1e1!3m2!1sw-CwpmmD6t6w8HKqUjPFSw!2e0?source=apiv3
+https://www.google.com/maps/@25.0464171,121.5578677,0a,73.7y,1h,90t/data=!3m4!1e1!3m2!1sBMketg0CNmNdtxTBiQlF-A!2e0?source=apiv3
+https://www.google.com/maps/@25.0478745,121.5578328,0a,73.7y,39.62h,90t/data=!3m4!1e1!3m2!1s2nkLWv4ytQ0zMXdWi_PVFg!2e0?source=apiv3
+https://www.google.com/maps/@25.047349,121.557852,0a,73.7y,1h,90t/data=!3m4!1e1!3m2!1ssCHmxVqGcqTOIowzHgaH1w!2e0?source=apiv3
+https://www.google.com/maps/@25.0480775,121.5577304,0a,73.7y,180h,90t/data=!3m4!1e1!3m2!1sMXtZ2gHxbfkZvMRKv6BN8A!2e0?source=apiv3
+https://www.google.com/maps/@25.0467464,121.557701,0a,73.7y,180h,90t/data=!3m4!1e1!3m2!1sjyFttlWOdERi9Nup2J_hTA!2e0?source=apiv3
+https://www.google.com/maps/@25.0455266,121.5576531,0a,73.7y,180h,90t/data=!3m4!1e1!3m2!1sx_3-48mnMdjp6KCtS0VsHg!2e0?source=apiv3
+https://www.google.com/maps/@25.0451794,121.5575559,0a,73.7y,257h,90t/data=!3m4!1e1!3m2!1sJ9u6mjrNOBwrC5l-lYhiaQ!2e0?source=apiv3
+https://www.google.com/maps/@25.0450688,121.5569551,0a,73.7y,247h,90t/data=!3m4!1e1!3m2!1sGZMhNyE7IicA0gM0V4WQJg!2e0?source=apiv3
+https://www.google.com/maps/@25.0454774,121.5578183,0a,73.7y,85h,90t/data=!3m4!1e1!3m2!1s4NYKyCt-rhbi-V_YbU16OQ!2e0?source=apiv3
+https://www.google.com/maps/@25.0454774,121.5578183,0a,73.7y,265h,90t/data=!3m4!1e1!3m2!1s4NYKyCt-rhbi-V_YbU16OQ!2e0?source=apiv3
+https://www.google.com/maps/@25.0458484,121.5578583,0a,73.7y,85h,90t/data=!3m4!1e1!3m2!1sSyr7ZZXWebJnTpcd-FgRBA!2e0?source=apiv3
+https://www.google.com/maps/@25.0458484,121.5578583,0a,73.7y,265h,90t/data=!3m4!1e1!3m2!1sSyr7ZZXWebJnTpcd-FgRBA!2e0?source=apiv3
+https://www.google.com/maps/@25.0462339,121.5578637,0a,73.7y,85h,90t/data=!3m4!1e1!3m2!1s3UACmlyidl6u3dM9WV1FdA!2e0?source=apiv3
+https://www.google.com/maps/@25.0467319,121.5578762,0a,73.7y,265h,90t/data=!3m4!1e1!3m2!1sUtNwbMY8sH_b40mzXKEWfQ!2e0?source=apiv3
+https://www.google.com/maps/@25.0462339,121.5578637,0a,73.7y,265h,90t/data=!3m4!1e1!3m2!1s3UACmlyidl6u3dM9WV1FdA!2e0?source=apiv3
+https://www.google.com/maps/@25.0467319,121.5578762,0a,73.7y,85h,90t/data=!3m4!1e1!3m2!1sUtNwbMY8sH_b40mzXKEWfQ!2e0?source=apiv3
+https://www.google.com/maps/@25.0470718,121.5578767,0a,73.7y,85h,90t/data=!3m4!1e1!3m2!1sAtqZaASzdrj7pGPf4qfKTQ!2e0?source=apiv3
+https://www.google.com/maps/@25.0470718,121.5578767,0a,73.7y,265h,90t/data=!3m4!1e1!3m2!1sAtqZaASzdrj7pGPf4qfKTQ!2e0?source=apiv3
+https://www.google.com/maps/@25.0475245,121.5578367,0a,73.7y,265h,90t/data=!3m4!1e1!3m2!1smfGuMxDyVMGtECOHJ8LNYg!2e0?source=apiv3
+https://www.google.com/maps/@25.0475245,121.5578367,0a,73.7y,85h,90t/data=!3m4!1e1!3m2!1smfGuMxDyVMGtECOHJ8LNYg!2e0?source=apiv3
+https://www.google.com/maps/@25.0478745,121.5578328,0a,73.7y,85h,90t/data=!3m4!1e1!3m2!1s2nkLWv4ytQ0zMXdWi_PVFg!2e0?source=apiv3
+https://www.google.com/maps/@25.0478745,121.5578328,0a,73.7y,265h,90t/data=!3m4!1e1!3m2!1s2nkLWv4ytQ0zMXdWi_PVFg!2e0?source=apiv3
+https://www.google.com/maps/@25.0481698,121.5578441,0a,73.7y,85h,90t/data=!3m4!1e1!3m2!1s26Oht6eUgiQNGvdwnKtymQ!2e0?source=apiv3
+https://www.google.com/maps/@25.0481698,121.5578441,0a,73.7y,265h,90t/data=!3m4!1e1!3m2!1s26Oht6eUgiQNGvdwnKtymQ!2e0?source=apiv3
+https://www.google.com/maps/@25.0447804,121.5562606,0a,73.7y,350h,90t/data=!3m4!1e1!3m2!1sEjwM6gOZvHkPWODirykABg!2e0?source=apiv3
+https://www.google.com/maps/@25.0447804,121.5562606,0a,73.7y,165h,90t/data=!3m4!1e1!3m2!1sEjwM6gOZvHkPWODirykABg!2e0?source=apiv3
+https://www.google.com/maps/@25.0451091,121.5573911,0a,73.7y,350h,90t/data=!3m4!1e1!3m2!1sAQbbZ9NaVQPb8JRPY5vZgw!2e0?source=apiv3
+https://www.google.com/maps/@25.0451091,121.5573911,0a,73.7y,165h,90t/data=!3m4!1e1!3m2!1sAQbbZ9NaVQPb8JRPY5vZgw!2e0?source=apiv3
+https://www.google.com/maps/@25.0445407,121.5554183,0a,73.7y,75h,90t/data=!3m4!1e1!3m2!1sec3c05YRGkiCf8NtAWuHTQ!2e0?source=apiv3
+https://www.google.com/maps/@25.0446908,121.556206,0a,73.7y,76h,90t/data=!3m4!1e1!3m2!1smfhlQRDlaXHOwf1ff5dyBg!2e0?source=apiv3
+https://www.google.com/maps/@25.0444691,121.5548547,0a,73.7y,75h,90t/data=!3m4!1e1!3m2!1sM88xbP_nNjhyn_tohesYcw!2e0?source=apiv3
+https://www.google.com/maps/@25.0448349,121.5569415,0a,73.7y,77h,90t/data=!3m4!1e1!3m2!1s0NqPM5X-1YVYTO_Rw40KLQ!2e0?source=apiv3
+https://www.google.com/maps/@25.0449117,121.5573254,0a,73.7y,76h,90t/data=!3m4!1e1!3m2!1so3KglUPMCObuZ1zn_r4p3g!2e0?source=apiv3
+https://www.google.com/maps/@25.0449202,121.5563077,0a,73.7y,257h,90t/data=!3m4!1e1!3m2!1s7ep9yRYcQvYUpqRdcNbh4w!2e0?source=apiv3
+https://www.google.com/maps/@25.0447473,121.5552964,0a,73.7y,257h,90t/data=!3m4!1e1!3m2!1s7uhgDnWFygCn1Da1k2k4qQ!2e0?source=apiv3
+https://www.google.com/maps/@25.045121,121.5572527,0a,73.7y,257h,90t/data=!3m4!1e1!3m2!1sIG2Cyf6-hJrSEooJb4AOwg!2e0?source=apiv3
+https://www.google.com/maps/@25.0450427,121.5576426,0a,73.7y,351h,90t/data=!3m4!1e1!3m2!1sWGHRY8Ixh-O7nOWjFA4bEg!2e0?source=apiv3
+https://www.google.com/maps/@25.0452859,121.5579555,0a,73.7y,257h,90t/data=!3m4!1e1!3m2!1sd2NSNPM7PsHauo7o_9rbuQ!2e0?source=apiv3
+https://www.google.com/maps/@25.0479741,121.5578351,0a,73.7y,-12.54h,90t/data=!3m4!1e1!3m2!1s1OwwN_JHt_4j-3ndZ0fb4Q!2e0?source=apiv3
+https://www.google.com/maps/@25.0445407,121.5554183,0a,73.7y,162h,90t/data=!3m4!1e1!3m2!1sec3c05YRGkiCf8NtAWuHTQ!2e0?source=apiv3
+https://www.google.com/maps/@25.0448349,121.5569415,0a,73.7y,162h,90t/data=!3m4!1e1!3m2!1s0NqPM5X-1YVYTO_Rw40KLQ!2e0?source=apiv3
+https://www.google.com/maps/@25.0446908,121.556206,0a,73.7y,162h,90t/data=!3m4!1e1!3m2!1smfhlQRDlaXHOwf1ff5dyBg!2e0?source=apiv3
+https://www.google.com/maps/@25.0449117,121.5573254,0a,73.7y,162h,90t/data=!3m4!1e1!3m2!1so3KglUPMCObuZ1zn_r4p3g!2e0?source=apiv3
+https://www.google.com/maps/@25.0447473,121.5552964,0a,73.7y,344h,90t/data=!3m4!1e1!3m2!1s7uhgDnWFygCn1Da1k2k4qQ!2e0?source=apiv3
+https://www.google.com/maps/@25.0449202,121.5563077,0a,73.7y,344h,90t/data=!3m4!1e1!3m2!1s7ep9yRYcQvYUpqRdcNbh4w!2e0?source=apiv3
+https://www.google.com/maps/@25.045121,121.5572527,0a,73.7y,344h,90t/data=!3m4!1e1!3m2!1sIG2Cyf6-hJrSEooJb4AOwg!2e0?source=apiv3
+
+光復南路兩側騎樓與巷口。現況取自 Google 街景各全景的拍攝時點。窗格、拱廊、招牌與牆體依可見外觀重建，尺寸及鏡頭高度為估算。
+https://www.google.com/maps/@25.0454289,121.5576496,0a,73.7y,68h,90t/data=!3m4!1e1!3m2!1sGI_WI1NWzTYZikThnuYJhA!2e0?source=apiv3
+https://www.google.com/maps/@25.0456597,121.5578239,0a,73.7y,286h,90t/data=!3m4!1e1!3m2!1sNE6JkEgeyE0PNMJJZPBfSg!2e0?source=apiv3
+https://www.google.com/maps/@25.0461309,121.5575194,0a,73.7y,109h,90t/data=!3m4!1e1!3m2!1stwL8e8NjPWc7EXeQIjO2TQ!2e0?source=apiv3
+https://www.google.com/maps/@25.0463254,121.5578656,0a,73.7y,286h,90t/data=!3m4!1e1!3m2!1saXSLV_LgQDxR1cEcK1BN2A!2e0?source=apiv3
+https://www.google.com/maps/@25.0467224,121.5580807,0a,73.7y,245h,90t/data=!3m4!1e1!3m2!1saaGYa4V_w5ZCKZiseLpgeg!2e0?source=apiv3
+https://www.google.com/maps/@25.0466538,121.557549,0a,73.7y,109h,90t/data=!3m4!1e1!3m2!1s0rsui6SJqbHtHqE1x9WQSg!2e0?source=apiv3
+https://www.google.com/maps/@25.0476767,121.5580747,0a,73.7y,245h,90t/data=!3m4!1e1!3m2!1s-xgBbmsJIR5KweFQRVz0Yw!2e0?source=apiv3
+https://www.google.com/maps/@25.0477835,121.5578305,0a,73.7y,286h,90t/data=!3m4!1e1!3m2!1sohLcfQXmTgO0LbIU3b-p6A!2e0?source=apiv3
+
+光復南路巷內轉角。巷路骨架取自 OpenStreetMap，巷內立面、工地圍擋、簷下及窗格參照 Google 街景拍攝時的外觀。對照頁保留 Google 畫面署名，兩版實機使用同一組相機參數。
+https://www.google.com/maps/@25.0456611,121.5565924,0a,73.7y,155h,90t/data=!3m4!1e1!3m2!1sdwLdhFzrla0w3vqTLVnmiA!2e0?source=apiv3
+https://www.google.com/maps/@25.0459376,121.5565481,0a,73.7y,329h,90t/data=!3m4!1e1!3m2!1sQqmWjG2FYBCN-SReuaymww!2e0?source=apiv3
+https://www.google.com/maps/@25.0464114,121.556488,0a,73.7y,329h,90t/data=!3m4!1e1!3m2!1siBwAi4D6mTpc3I7n1zkVjg!2e0?source=apiv3
+https://www.google.com/maps/@25.0471433,121.5563877,0a,73.7y,155h,90t/data=!3m4!1e1!3m2!1sv5yr5J0Y5ZBrdjnAGAY4vg!2e0?source=apiv3
+https://www.google.com/maps/@25.0475777,121.5563258,0a,73.7y,155h,90t/data=!3m4!1e1!3m2!1s22RtOlWI1mUIxYkyPKb2zA!2e0?source=apiv3
+https://www.google.com/maps/@25.046292,121.5589488,0a,73.7y,155h,90t/data=!3m4!1e1!3m2!1sdDPBMzlRwZami5Cq6xsn1g!2e0?source=apiv3
+https://www.google.com/maps/@25.0467968,121.5587462,0a,73.7y,27h,90t/data=!3m4!1e1!3m2!1s-kWeEBFQhPu38ZG5hu-l1g!2e0?source=apiv3
+https://www.google.com/maps/@25.0474693,121.559222,0a,73.7y,155h,90t/data=!3m4!1e1!3m2!1sO4zGSXLzONWkSqqGLTjmKg!2e0?source=apiv3
+https://www.google.com/maps/@25.0476977,121.5591869,0a,73.7y,27h,90t/data=!3m4!1e1!3m2!1sVDROcfniv9Acps3-RTq2XQ!2e0?source=apiv3
+https://www.google.com/maps/@25.0478853,121.5591683,0a,73.7y,160h,90t/data=!3m4!1e1!3m2!1sNVaVavTPJR4NFazfPaVuAA!2e0?source=apiv3
+https://www.google.com/maps/@25.0461002,121.5594089,0a,73.7y,183h,90t/data=!3m4!1e1!3m2!1sFQ3euYwzCw1NkPRwcU79fw!2e0?source=apiv3
+https://www.google.com/maps/@25.0462949,121.5564989,0a,73.7y,160h,90t/data=!3m4!1e1!3m2!1siuhQxUZPdsWQFbnJlstSCQ!2e0?source=apiv3
+https://www.google.com/maps/@25.0467974,121.5564308,0a,73.7y,345h,90t/data=!3m4!1e1!3m2!1sAqqL5e4y-u3UtW3WNLvcQQ!2e0?source=apiv3
+
+光復南路支弄至下一路口。路網以 OpenStreetMap 為骨架，可見的立面依 Google 街景拍攝時點重建。十二組三圖使用各全景回傳的座標及方位。
+https://www.google.com/maps/@25.0455771,121.5554204,0a,73.7y,155h,90t/data=!3m4!1e1!3m2!1sB-LI-FFnWf_F1ErCjkm7Wg!2e0?source=apiv3
+https://www.google.com/maps/@25.0459348,121.5557539,0a,73.7y,165h,90t/data=!3m4!1e1!3m2!1sy2vEJmr7wTXoiCZLrztcQA!2e0?source=apiv3
+https://www.google.com/maps/@25.0464509,121.5557101,0a,73.7y,15h,90t/data=!3m4!1e1!3m2!1sfM9gjtczzLlZnUQ2eLqk2A!2e0?source=apiv3
+https://www.google.com/maps/@25.0467764,121.5552428,0a,73.7y,16h,90t/data=!3m4!1e1!3m2!1sHL4DydKEprldXwDidZxj1A!2e0?source=apiv3
+https://www.google.com/maps/@25.0474178,121.5551643,0a,73.7y,157h,90t/data=!3m4!1e1!3m2!1sMWEGTOS-kDKBRZQ8ph2yPA!2e0?source=apiv3
+https://www.google.com/maps/@25.0464042,121.5598341,0a,73.7y,260h,90t/data=!3m4!1e1!3m2!1sk-CqG1Yl_iOUdn8XFEZQ3A!2e0?source=apiv3
+https://www.google.com/maps/@25.0469042,121.5597335,0a,73.7y,255h,90t/data=!3m4!1e1!3m2!1sfiIUV5hPvLCdhTo-CSHBAg!2e0?source=apiv3
+https://www.google.com/maps/@25.0468514,121.5602759,0a,73.7y,20h,90t/data=!3m4!1e1!3m2!1s-garJjJWvuf0IqZN5o9tMA!2e0?source=apiv3
+https://www.google.com/maps/@25.0474061,121.5597147,0a,73.7y,260h,90t/data=!3m4!1e1!3m2!1s89p9Z8Ug6L9WBmmX_1dnBw!2e0?source=apiv3
+https://www.google.com/maps/@25.0478313,121.5596985,0a,73.7y,260h,90t/data=!3m4!1e1!3m2!1sVn_U_V1Fl0S3DN5fN6S9vQ!2e0?source=apiv3
+https://www.google.com/maps/@25.046423,121.5600021,0a,73.7y,263h,90t/data=!3m4!1e1!3m2!1surcQs8OMAF1Y3gVOvAXJ3w!2e0?source=apiv3
+https://www.google.com/maps/@25.0467609,121.5602867,0a,73.7y,260h,90t/data=!3m4!1e1!3m2!1svwLCczXAYwVCTr1d0XKYLg!2e0?source=apiv3
+
+八德路三段 158 巷 8、20 弄與四段 72 巷至 106 巷 2、4、6、8 弄。參照各 Google 街景全景拍攝時可見的兩側立面，路網骨架來自 OpenStreetMap。以全景位置及方位設定兩版實機相機，離地高度估為 2.45 公尺。
+https://www.google.com/maps/@25.0472847,121.5547875,0a,73.7y,82h,90t/data=!3m4!1e1!3m2!1sOSR3X1g9wzrtaXMQGlGPWA!2e0?source=apiv3
+https://www.google.com/maps/@25.0476282,121.5549017,0a,73.7y,170h,90t/data=!3m4!1e1!3m2!1sw9NuA5zQSozxqHkA2poESQ!2e0?source=apiv3
+https://www.google.com/maps/@25.0472894,121.5548863,0a,73.7y,85h,90t/data=!3m4!1e1!3m2!1s7zcTsmNdTjUsBgoWjVSNUw!2e0?source=apiv3
+https://www.google.com/maps/@25.0476217,121.5549976,0a,73.7y,263h,90t/data=!3m4!1e1!3m2!1sXVM-UlrFk2wxy-os24GfPg!2e0?source=apiv3
+https://www.google.com/maps/@25.0475692,121.5610276,0a,73.7y,263h,90t/data=!3m4!1e1!3m2!1s_3pPocfBDEWc9hzlRk8obg!2e0?source=apiv3
+https://www.google.com/maps/@25.0476326,121.5610971,0a,73.7y,165h,90t/data=!3m4!1e1!3m2!1sSW4kVoRge-BO5xP31C5l5g!2e0?source=apiv3
+https://www.google.com/maps/@25.0479276,121.5607489,0a,73.7y,264h,90t/data=!3m4!1e1!3m2!1sfvMBFHvBbzWcBqFLLPyJMA!2e0?source=apiv3
+https://www.google.com/maps/@25.0472521,121.5604824,0a,73.7y,259h,90t/data=!3m4!1e1!3m2!1shrR0WJ7_Bp2RVzdIUeOMUQ!2e0?source=apiv3
+https://www.google.com/maps/@25.047352,121.5611313,0a,73.7y,257h,90t/data=!3m4!1e1!3m2!1s7n5dcv9U0-G1fsq5qD27kA!2e0?source=apiv3
+https://www.google.com/maps/@25.0470828,121.5611628,0a,73.7y,262h,90t/data=!3m4!1e1!3m2!1sCM2KXAGqw41zOfd6SLOdvQ!2e0?source=apiv3
+106 巷 6、8 弄轉角的補充正面視角
+https://www.google.com/maps/@25.047352,121.5611313,0a,73.7y,300h,90t/data=!3m4!1e1!3m2!1s7n5dcv9U0-G1fsq5qD27kA!2e0?source=apiv3
+https://www.google.com/maps/@25.0470828,121.5611628,0a,73.7y,215h,90t/data=!3m4!1e1!3m2!1sCM2KXAGqw41zOfd6SLOdvQ!2e0?source=apiv3
+
+延吉街 9 巷與四段 106 巷 10 弄回望機位
+158 巷 20 弄，回望鋪磚通道方向 https://www.google.com/maps/@25.0472557,121.5544805,0a,73.7y,82h,90t/data=!3m4!1e1!3m2!1s1pPYW9o_rR1WYPIDQm0IMw!2e0?source=apiv3
+延吉街 9 巷，回看三段 106 巷市場路口 https://www.google.com/maps/@25.0471845,121.5538853,0a,73.7y,80h,90t/data=!3m4!1e1!3m2!1sLl7NPrU62-smWnyvp6CEow!2e0?source=apiv3
+延吉街 9 巷中段，朝市場路口 https://www.google.com/maps/@25.0471597,121.5536176,0a,73.7y,80h,90t/data=!3m4!1e1!3m2!1sbZr5I-qdT1ZS_0gKL8eynw!2e0?source=apiv3
+三段 106 巷，從北側回望攤棚 https://www.google.com/maps/@25.0474807,121.5537542,0a,73.7y,145h,90t/data=!3m4!1e1!3m2!1sFCP2muTmU9sJTcOSc06zqQ!2e0?source=apiv3
+三段 106 巷，從南側看路口與樹冠 https://www.google.com/maps/@25.0469944,121.5541256,0a,73.7y,330h,90t/data=!3m4!1e1!3m2!1sBlZAuh3VRG1i9SK44Wod_w!2e0?source=apiv3
+四段 106 巷往南，看向市民大道 https://www.google.com/maps/@25.0468947,121.5611864,0a,73.7y,175h,90t/data=!3m4!1e1!3m2!1s_wh5TkCgpyaRX98s6hlU3Q!2e0?source=apiv3
+四段 106 巷 10 弄，從 SAVE 招牌旁看入口 https://www.google.com/maps/@25.0468239,121.5611951,0a,73.7y,256h,90t/data=!3m4!1e1!3m2!1sb0FfHnI42uYhK_C-02e95Q!2e0?source=apiv3
+10 弄東段，沿圍牆回望 https://www.google.com/maps/@25.0467849,121.5609629,0a,73.7y,264h,90t/data=!3m4!1e1!3m2!1sD7OwgBEpuOXEmA5q2eRjpg!2e0?source=apiv3
+10 弄中段，回看兩側窗籠與雨棚 https://www.google.com/maps/@25.0467644,121.5607614,0a,73.7y,255h,90t/data=!3m4!1e1!3m2!1su2NCZREpJErEJ3zAaN-IaQ!2e0?source=apiv3
+10 弄折角，朝東看回 106 巷方向 https://www.google.com/maps/@25.0467407,121.5605886,0a,73.7y,81h,90t/data=!3m4!1e1!3m2!1sQM4O5GmpzAPiWzmy-kK19w!2e0?source=apiv3
+10 弄西段，從 72 巷側看折角 https://www.google.com/maps/@25.0466691,121.5603946,0a,73.7y,80h,90t/data=!3m4!1e1!3m2!1sBPxDhGoo_vK7bn4DzB2nLw!2e0?source=apiv3
+
+動態交通使用臺北市交通管制工程處「臺北市號誌位置」2025-07-15 版，依政府資料開放授權條款第 1 版使用。路口座標對齊遊戲路面，同一街口南北兩側資料合併。號誌時制、行穿線幾何、行人及公車車流為遊戲模擬。
+https://data.taipei/dataset/detail?id=4a599738-6550-448a-9a78-03b26c67e249
+巡航參考交工處市區道路速限表（115.2.3）；匝道與停車設施採遊戲預設速限。
+https://bote.gov.taipei/cp.aspx?n=2CBC30E860583ED4
+
+公車站位、行向、站序及上下車限制取自臺北市公車動態資訊中心 GetStop（2026-11-21，WGS84），使用 669 及 204 在本遊戲平面車道範圍內的站位，橫向對齊模型路緣。班距、上下客時間及乘客為遊戲模擬。
+https://tcgbusfs.blob.core.windows.net/blobbus/GetStop.gz
+https://ebus.gov.taipei/EBus/VsSimpleMap?rid=10278
+https://pda5284.gov.taipei/MQS/route.jsp?rid=11212
