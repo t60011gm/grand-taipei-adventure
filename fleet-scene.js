@@ -62,6 +62,9 @@ function body(type,paint){
 export function fleetRenderer(parent,cars,citizens){
  const palette=[0x41697d,0xe6dcc9,0x945047,0x5a705d,0xa4abb3],groups=new Map(),dummy=new T.Object3D()
  const material=new T.MeshStandardMaterial({vertexColors:true,side:T.DoubleSide,roughness:.65})
+ const brakeLights=new T.InstancedMesh(new T.SphereGeometry(1,10,6),new T.MeshBasicMaterial({color:0xff3829,toneMapped:false}),cars.length*2)
+ brakeLights.count=0;brakeLights.frustumCulled=false;parent.add(brakeLights)
+ const lamp=new T.Object3D(),lampMatrix=new T.Matrix4()
  const scooters=new Map(),riders=[[],[]]
  const scooterCount=cars.filter(c=>types[c.type].name==='scooter').length
  for(const c of cars){
@@ -112,12 +115,21 @@ export function fleetRenderer(parent,cars,citizens){
   parent.add(root);return {root,shirt,helmet:shell.material}
  }
  return function draw(near,pose,actor){
+  brakeLights.count=0
   const riderCount=[0,0]
   for(const mesh of scooters.values())mesh.count=0
   for(const mesh of groups.values())mesh.count=0
   for(const c of near){
    if(c.type===4&&(c.occupied||Math.hypot(c.x-actor.x,c.n+actor.z)<58))continue
    const p=pose(c);dummy.position.set(p.x,p.h+.025,-p.n);dummy.rotation.set(0,p.angle,p.slope,'YXZ');dummy.updateMatrix()
+   if(c.braking&&c.type<4){
+    const {length,width,height}=types[c.type]
+    for(const side of [-1,1]){
+     lamp.position.set(-length/2-.059,height*(c.type===3?.53:.61)-.19,side*width*.293)
+     lamp.scale.set(.026,.050,.119*width);lamp.updateMatrix()
+     brakeLights.setMatrixAt(brakeLights.count++,lampMatrix.multiplyMatrices(dummy.matrix,lamp.matrix))
+    }
+   }
    let batch=c.batch
    if(types[c.type].name==='scooter'){
     batch=c.batch=scooterBatch(c)
@@ -128,6 +140,7 @@ export function fleetRenderer(parent,cars,citizens){
    }
    batch.setMatrixAt(batch.count++,dummy.matrix)
   }
+  if(brakeLights.count)brakeLights.instanceMatrix.needsUpdate=true
   for(const [style,pool] of riders.entries())for(let i=riderCount[style];i<pool.length;i++)pool[i].root.visible=false
   for(const mesh of scooters.values())if(mesh.count)mesh.instanceMatrix.needsUpdate=true
   for(const mesh of groups.values())if(mesh.count)mesh.instanceMatrix.needsUpdate=true

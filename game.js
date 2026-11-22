@@ -423,7 +423,7 @@ async function run(){
    const delta=tour?dt*tourSpeed:dt
    for(let t=0;t<delta;t+=1/90){
     const step=Math.min(delta-t,1/90)
-    if(traffic.enabled)traffic.tick(step,{x:game.car.x,n:-game.car.z,h:game.car.roadHeight??game.sample(game.car.x,1)})
+    if(traffic.enabled)traffic.tick(step,{x:game.car.x,n:-game.car.z,v:game.car.v,angle:-game.car.yaw,roadId:game.car.roadId,h:game.car.roadHeight??game.sample(game.car.x,1)})
     if(tour){
      const transferring=tour.transfer
      tour.tick(game.car,step,traffic.enabled?traffic:null)

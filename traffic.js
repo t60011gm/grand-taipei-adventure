@@ -65,9 +65,33 @@ export function createTraffic(city){
    const k=key(c.x,c.n);if(!buckets.has(k))buckets.set(k,[]);buckets.get(k).push(c)
   }
  }
- for(const id of ['civic-1','civic1','tourSurface-1','tourSurface1','GFsurfaceG1','GFsurfaceG-1','GFsurfaceC1','GFsurfaceC-1','GFsurfaceB']){
-  const p=city.tourLanes[id];if(!p)continue
-  const lane=path(['civic1','tourSurface1','GFsurfaceC1','GFsurfaceG-1'].includes(id)?p.slice().reverse():p)
+ const lanes=city.tourLanes
+ const elevated=[
+  ['新生北向','51362361','260152357'],['新生南向','50289495','1079151555','244450513'],
+  ['建國北向','910567292','910567291'],['建國南向','910959595','252657373','252657374']
+ ]
+ const extra=new Map()
+ for(const [name,...ids] of elevated){
+  if(ids.every(id=>lanes[id]))extra.set(name,path(ids.flatMap(id=>lanes[id])))
+ }
+ let merge
+ if(lanes.guangfuWest&&lanes.civic1){
+  const ramp=path(lanes.guangfuWest),end=ramp.p.at(-1)
+  const through=lanes.civic1.filter(p=>p[0]<end[0]).reverse()
+  // Blend into the westbound lane over the painted taper.
+  const joined=through.map(p=>{
+   const t=Math.min(1,(end[0]-p[0])/36)
+   return [p[0],p[1]+(end[1]-through[0][1])*(1-t*t*(3-2*t)),p[2]]
+  })
+  const lane=path([...ramp.p,...joined]);lane.mergeAt=ramp.length
+  const main=path(lanes.civic1.slice().reverse())
+  const ix=main.p.findIndex(p=>p[0]<=end[0])
+  merge={...point(main,main.s[ix]),mainAt:main.s[ix],lane};extra.set('光復西向匯入',lane)
+ }
+ for(const id of ['civic-1','civic1','tourSurface-1','tourSurface1','GFsurfaceG1','GFsurfaceG-1','GFsurfaceC1','GFsurfaceC-1','GFsurfaceB',...extra.keys()]){
+  const p=city.tourLanes[id];if(!p&&!extra.has(id))continue
+  const lane=extra.get(id)??path(['civic1','tourSurface1','GFsurfaceC1','GFsurfaceG-1'].includes(id)?p.slice().reverse():p)
+  lane.id=id
   if(!id.startsWith('civic'))for(const e of events(lane)){
    if(e.c)continue
    const p=point(lane,e.m)
@@ -82,10 +106,11 @@ export function createTraffic(city){
    turn.exitWalk=events(turn).find(e=>e.j===entry.j&&e.c&&!e.c.ns&&e.c.line<0)?.c
   }
   for(let m=32;m<lane.length-5;m+=115){
+   if(lane===merge?.lane&&m>lane.mergeAt-50)break
    const seq=Math.floor((m-32)/115)
    const surface=id.startsWith('tourSurface')||id.startsWith('GFsurface')
    const type=routeStops.length&&seq%8===0?4:surface&&seq%3===1?5:seq%4
-   const length=types[type].length,cruise=(roadLimit(id,'surface')+(cars.length*7)%11-5)/3.6
+   const length=types[type].length,cruise=(roadLimit(id,extra.has(id)?'cross':'surface',id)+(cars.length*7)%11-5)/3.6
    cars.push({stations:type===4?routeStops:null,type,length,lane,m,previous:m,paint:cars.length%5,cruise,v:cruise,wait:false,...point(lane,m)})
    if(turn&&type<4&&seq%2===0){
     const c=cars.at(-1);c.turn=turn
@@ -138,7 +163,25 @@ export function createTraffic(city){
    const near=buckets.get(key(a[0]+dx,a[1]+dn));if(near)near.forEach(check)
   }
   if(player)check(player)
-  return {distance:Math.min(light,ped,gap),speed:Math.min(Math.sqrt(6*Math.min(light,ped)),gap/1.8),reason:ped<light&&ped<gap?'停讓行人':light<gap?'等候號誌':busGap===gap&&gap<Infinity?'禮讓停靠公車':'保持跟車距離'}
+  let yieldDistance=Infinity
+  if(merge&&(lane===merge.lane||lane.id==='guangfuWest')){
+   const remaining=(lane.mergeAt??lane.length)-m
+   if(remaining>8&&remaining<56){
+    // Reserve a slot before entering the taper. Ignore traffic on other levels
+    // and the vehicles already queuing on the ramp.
+    const ux=Math.cos(merge.angle),un=Math.sin(merge.angle)
+    const arrival=(remaining+6)/Math.max(v,6)
+    const conflicts=c=>{
+     if(c===self||c.wait||c.lane===merge.lane||c.roadId==='guangfuWest'||Math.abs(c.h-merge.h)>1.4)return false
+     const dx=merge.x-c.x,dn=merge.n-c.n,along=dx*ux+dn*un
+     const d=c.lane?.id==='civic1'?merge.mainAt-c.m:along
+     return d>-5&&d<100&&(c.lane?.id==='civic1'||Math.abs(dx*un-dn*ux)<2.5)&&
+      Math.cos((c.angle??merge.angle)-merge.angle)>.85&&d/Math.max(2,c.v??0)<Math.min(5,arrival+2)
+    }
+    if(cars.some(conflicts)||(player&&conflicts(player)))yieldDistance=Math.max(0,remaining-10)
+   }
+  }
+  return {distance:Math.min(light,ped,gap,yieldDistance),speed:Math.min(Math.sqrt(6*Math.min(light,ped)),yieldDistance<Infinity?Math.min(8,Math.sqrt(5*yieldDistance)):Infinity,gap/1.8),reason:yieldDistance<Math.min(light,ped,gap)?'匯入前讓車':ped<light&&ped<gap?'停讓行人':light<gap?'等候號誌':busGap===gap&&gap<Infinity?'禮讓停靠公車':'保持跟車距離'}
  }
  function tick(dt,player){
   if(!enabled)return
@@ -173,10 +216,12 @@ export function createTraffic(city){
    }
    const lim=desired[idx],stop=c.type===4?serviceLimit(c,step,player,cars):Infinity
    const corner=c.lane.through&&Math.abs(c.m-c.lane.fork)<16?4:Infinity
-   const target=Math.min(corner,c.cruise,lim.speed,Math.sqrt(4*stop))
+   const cruise=c.lane===merge?.lane?(c.m<c.lane.mergeAt?40:78)/3.6:c.cruise
+   const target=Math.min(corner,cruise,lim.speed,Math.sqrt(4*stop))
+   const previousSpeed=c.v
    c.v+=Math.max(-4*step,Math.min(2.4*step,target-c.v))
    const move=Math.min(c.v*step,lim.distance,stop)
-   c.previous=c.m;c.v=move/step;c.m=Math.min(c.lane.length,c.m+move);const position=point(c.lane,c.m);Object.assign(c,c.type===4?busPose(c,position,c.m):position)
+   c.previous=c.m;c.v=move/step;c.braking=(previousSpeed-c.v)/step>.45||(c.v<.15&&target<.15);c.m=Math.min(c.lane.length,c.m+move);const position=point(c.lane,c.m);Object.assign(c,c.type===4?busPose(c,position,c.m):position)
    if(c.m>=c.lane.length)c.wait=true
   }
   index()
