@@ -181,7 +181,7 @@ export function createTraffic(city){
     if(cars.some(conflicts)||(player&&conflicts(player)))yieldDistance=Math.max(0,remaining-10)
    }
   }
-  return {distance:Math.min(light,ped,gap,yieldDistance),speed:Math.min(Math.sqrt(6*Math.min(light,ped)),yieldDistance<Infinity?Math.min(8,Math.sqrt(5*yieldDistance)):Infinity,gap/1.8),reason:yieldDistance<Math.min(light,ped,gap)?'匯入前讓車':ped<light&&ped<gap?'停讓行人':light<gap?'等候號誌':busGap===gap&&gap<Infinity?'禮讓停靠公車':'保持跟車距離'}
+  return {distance:Math.min(light,ped,gap,yieldDistance),speed:Math.min(Math.sqrt(6*Math.min(light,ped)),yieldDistance<Infinity?Math.min(5.5,Math.sqrt(5*yieldDistance)):Infinity,gap/1.8),reason:yieldDistance<Math.min(light,ped,gap)?'匯入前讓車':ped<light&&ped<gap?'停讓行人':light<gap?'等候號誌':busGap===gap&&gap<Infinity?'禮讓停靠公車':'保持跟車距離'}
  }
  function tick(dt,player){
   if(!enabled)return
