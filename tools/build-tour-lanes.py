@@ -134,4 +134,16 @@ if __name__=='__main__':
     print('planned',len(out),'/',len(roads))
     if len(out)!=len(roads):
         raise SystemExit('At least one road has no clear path')
+    # Lane selection runs per road. Carry the incoming lateral offset through
+    # splits of a one-way viaduct, then ease into its new lane centre.
+    elevated=[road for road in roads if road['kind']=='cross']
+    for upstream in elevated:
+        for downstream in elevated:
+            if upstream['p'][-1]!=downstream['p'][0]:
+                continue
+            path=np.asarray(out[downstream['id']])
+            offset=np.asarray(out[upstream['id']][-1])-path[0]
+            distance=np.r_[0,np.cumsum(np.linalg.norm(np.diff(path[:,:2],axis=0),axis=1))]
+            t=np.clip(distance/36,0,1)
+            out[downstream['id']]=(path+(1-t*t*(3-2*t))[:,None]*offset).round(4).tolist()
     (assets/'tour-lanes.json').write_text(json.dumps(out,separators=(',',':')))
