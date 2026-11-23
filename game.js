@@ -3,9 +3,10 @@ import {intersections} from './crossings.js'
 import {createBusAudio} from './bus-audio.js'
 import {returnWalk} from './return-walk.js'
 import {passengerService} from './passenger.js'
-import {createTraffic} from './traffic.js?v=interchanges'
+import {mainlineMovements} from './mainline.js'
+import {createTraffic} from './traffic.js?v=mainline'
 import {installTraffic} from './traffic-scene.js'
-import {planTour,createTour,interchangeTour} from './tour.js?v=interchanges'
+import {planTour,createTour,interchangeTour} from './tour.js?v=mainline'
 import {createMinimap} from './minimap.js'
 import * as T from './vendor/three.js'
 import {GLTFLoader} from './vendor/loaders/GLTFLoader.js'
@@ -60,8 +61,9 @@ async function run(){
   if(!response.ok)throw Error('導覽車道路線載入失敗')
   city.tourLanes=await response.json()
  }
- const interchange=params.get('tour')==='interchanges'
- const tourRoute=interchange?interchangeTour(city):params.get('tour')==='all'?planTour(city):null
+ const mainline=params.get('tour')==='mainline'
+ const interchange=mainline||params.get('tour')==='interchanges'
+ const tourRoute=mainline?mainlineMovements(city.tourLanes).map(m=>m.leg):interchange?interchangeTour(city):params.get('tour')==='all'?planTour(city):null
  let tour=tourRoute&&createTour(tourRoute),tourSpeed=1
  const arcadeVisit=params.get('walk')==='guangfu'&&!approach&&!feeder
  const returnDrive=params.get('drive')==='guangfu'
@@ -94,7 +96,7 @@ async function run(){
  for(const [x,y,r] of [...city.transport.piers,...(city.transport.parked??[])])city.columns.push([x,-y,r])
  const lastChunk=city.chunks.length-1
  const blockAt=x=>clamp(Math.floor((x-west.start)/100),0,lastChunk)
- const traffic=createTraffic(city),returnStart=params.get('bus')==='669-return',busStart=(params.get('bus')==='669'||returnStart)&&!tour&&!approach&&!feeder&&!arcadeVisit&&!bridgeDrive
+ const traffic=createTraffic(city,mainline),returnStart=params.get('bus')==='669-return',busStart=(params.get('bus')==='669'||returnStart)&&!tour&&!approach&&!feeder&&!arcadeVisit&&!bridgeDrive
  if(busStart){
   const s=traffic.stops.find(s=>s.route==='669'&&s.destination==='市政府'&&s.name==='華山公園(市民)')
   city.startPedestrian={x:s.poleX+.9*Math.cos(s.angle)+.6*Math.sin(s.angle),z:-s.poleN-.9*Math.sin(s.angle)+.6*Math.cos(s.angle),yaw:-s.angle}
@@ -296,7 +298,7 @@ async function run(){
  const eyeView=()=>game.riding?driverView:firstPerson
  function centerView(){orbit=0;pitch=eyeView()?0:.17}
  function overlay(){busAudio.pause();paused=true;keys.clear();if(!menu.open)menu.showModal()}
- function begin(){busAudio.start();if(!started&&(tour||bridgeDrive||arcadeVisit)){game.interact();if(tour)tour.place(game.car);centerView()}menu.close();paused=false;last=performance.now();started=true;$('reset').hidden=false;start.textContent='繼續漫遊';canvas.focus()}
+ function begin(){busAudio.start();if(!started&&(tour||bridgeDrive||arcadeVisit)){game.interact();if(tour){tour.place(game.car);traffic.stage(game.car.roadId)}centerView()}menu.close();paused=false;last=performance.now();started=true;$('reset').hidden=false;start.textContent='繼續漫遊';canvas.focus()}
  $('tourSpeed').onclick=()=>{tourSpeed=tourSpeed===4?1:tourSpeed*2;$('tourSpeed').textContent='導覽速度 '+tourSpeed+'×'}
  start.onclick=begin;$('help').onclick=overlay
  $('reset').onclick=()=>{pass.reset();clearReturn();offAfterExit=false;game.reset();if(returnStart&&busStart)startReturn();if(tourRoute)tour=createTour(tourRoute);if(!tour)driverView=bridgeDrive;firstPerson=false;started=false;centerView();begin()}
@@ -429,6 +431,7 @@ async function run(){
     if(tour){
      const transferring=tour.transfer
      tour.tick(game.car,step,traffic.enabled?traffic:null)
+     if(transferring&&!tour.transfer&&traffic.enabled)traffic.stage(game.car.roadId)
      if(transferring&&!tour.transfer&&traffic.enabled)traffic.clearOverlap({x:game.car.x,n:-game.car.z,h:game.car.roadHeight})
     }
     else{

@@ -127,7 +127,7 @@ export function planTour(city){
 }
 
 export function createTour(route){
- let i=0,m=0,j=1,speed=0,elapsedDistance=0,hold=0,completed=0,done=false
+ let i=0,m=0,j=1,speed=route[0].startSpeed??0,elapsedDistance=0,hold=0,completed=0,done=false
  const total=route.filter(l=>l.visit).length
  function pose(car,dt){
   const leg=route[i],p=leg.p
@@ -143,23 +143,24 @@ export function createTour(route){
  }
  function tick(car,dt,traffic){
   if(done)return
-  if(hold>0){hold=Math.max(0,hold-dt);if(hold===0)pose(car,0);return}
+  if(hold>0){hold=Math.max(0,hold-dt);if(hold===0){speed=route[i].startSpeed??0;pose(car,0)}return}
   const leg=route[i],remaining=leg.length-m
   // Read the coming bend before steering. At normal cruise this looks about
   // a second ahead; short junctions and garage returns use the same rule.
   let bendLimit=cruiseSpeed(roadLimit(leg.id,leg.kind,leg.label),m)
-  for(let k=j;k<leg.p.length-1&&leg.s[k]-m<Math.max(6,speed*1.35);k++){
+  for(let k=j;k<leg.p.length-1&&leg.s[k]-m<Math.max(6,speed*(leg.startSpeed?2.6:1.35));k++){
    const a=leg.p[Math.max(0,k-3)],b=leg.p[k],c=leg.p[Math.min(leg.p.length-1,k+3)]
    const ab=Math.hypot(b[0]-a[0],b[1]-a[1]),bc=Math.hypot(c[0]-b[0],c[1]-b[1])
    if(ab*bc<.00001)continue
    const cos=Math.max(-1,Math.min(1,((b[0]-a[0])*(c[0]-b[0])+(b[1]-a[1])*(c[1]-b[1]))/(ab*bc)))
    const curvature=2*Math.acos(cos)/(ab+bc)
-   if(curvature>.01)bendLimit=Math.min(bendLimit,Math.sqrt(2.2/curvature+5*Math.max(0,leg.s[k]-m-1)))
+   if(curvature>.01)bendLimit=Math.min(bendLimit,Math.sqrt(2.2/curvature+(leg.startSpeed?3.4:5)*Math.max(0,leg.s[k]-m-1)))
   }
   const stop=!route[i+1]||route[i+1].transfer
   const safety=traffic?.guide(leg,m,j,speed)
   const limit=Math.min(safety?.speed??Infinity,bendLimit,stop?Math.sqrt(2*3.8*remaining)+.15:Infinity)
-  speed+=Math.min(3.3*dt,Math.max(-4.2*dt,limit-speed))
+  const deceleration=safety?.reason==='主線減速留空間'&&safety.speed<=bendLimit?1.7:leg.startSpeed&&remaining>50&&(!safety||safety.distance>10)?2.3:4.2
+  speed+=Math.min(3.3*dt,Math.max(-deceleration*dt,limit-speed))
   const step=Math.min(safety?.distance??Infinity,remaining,speed*dt);if(step<speed*dt&&step<remaining)speed=step/dt;elapsedDistance+=step;m+=step;pose(car,dt)
   if(m>=leg.length){
    if(leg.visit)completed++

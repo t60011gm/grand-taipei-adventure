@@ -2,23 +2,10 @@ import {stations,resetService,busPose,serviceLimit} from './bus-service.js'
 import {crossings,detector,walkOpen,phase,stopBarWidth,world} from './crossings.js'
 import {types,randomizeScooter} from './fleet.js'
 import {roadLimit} from './speed.js'
+import {mainlineMovements} from './mainline.js'
 export {phase}
-export function path(points){
- const p=[points[0]],s=[0]
- for(const b of points.slice(1)){
-  const a=p.at(-1),d=Math.hypot(...a.map((v,i)=>b[i]-v))
-  if(d>.001){p.push(b);s.push(s.at(-1)+d)}
- }
- return {p,s,length:s.at(-1)}
-}
-export function point(lane,m){
- const {p,s}=lane
- let lo=0,hi=s.length-1
- while(hi-lo>1){const k=(lo+hi)>>1;if(s[k]<=m)lo=k;else hi=k}
- const a=p[lo],b=p[hi],f=Math.min(1,Math.max(0,(m-s[lo])/(s[hi]-s[lo])))
- return {x:a[0]+(b[0]-a[0])*f,n:a[1]+(b[1]-a[1])*f,h:a[2]+(b[2]-a[2])*f,
-  angle:Math.atan2(b[1]-a[1],b[0]-a[0]),slope:Math.atan2(b[2]-a[2],Math.hypot(b[0]-a[0],b[1]-a[1])),i:hi}
-}
+import {path,point} from './lane-geometry.js'
+export {path,point}
 // Project nearby bumpers onto the upcoming polyline, including curved approaches.
 function ahead(lane,m,i,q,buffer){
  let gap=Infinity
@@ -55,7 +42,7 @@ function dunhuaTurn(lane,entry){
  turn.through=lane;turn.fork=entry.m+5
  return turn
 }
-export function createTraffic(city){
+export function createTraffic(city,demonstration=false){
  const walks=crossings(),events=detector(walks)
  const stopBars=[],stops=[],cars=[],buckets=new Map(),key=(x,n)=>Math.floor(x/60)+','+Math.floor(n/60)
  let time=0,interval=.075,carry=0,enabled=true,status=''
@@ -147,6 +134,30 @@ export function createTraffic(city){
     cars.push({type:0,length:types[0].length,lane:turn,turn,m,previous:m,paint:2,cruise:11,v:5,wait:false,...point(turn,m)})
   }
  }
+ const movements=mainlineMovements(lanes)
+ for(const movement of movements){
+  const lane=movement.lane,m=0
+  const car={lane,type:1,length:types[1].length,paint:2,m,previous:m,v:8,cruise:10,wait:false,...point(lane,m)}
+  movement.car=car
+  cars.push(car)
+ }
+ // Stage repeatable starting positions only when a new demonstration leg begins.
+ // From that point the three vehicles use their normal traffic controllers.
+ function stage(id){
+  if(!demonstration)return
+  const move=movements.find(m=>m.id===id)
+  if(!move)return
+  const start=move.leg.mainStart,own=cars.filter(c=>c.lane.id===id)
+  const follower=own[0]
+  function place(car,m,v){
+   Object.assign(car,point(car.lane,m),{m,previous:m,v,wait:false,braking:false})
+  }
+  for(const c of own)if(c!==follower&&c.m>=start-100&&c.m<move.at+150)c.wait=true
+  place(follower,start-42,move.leg.startSpeed)
+  place(move.car,Math.max(0,move.mergeAt-95),6)
+  move.follower=follower
+  index()
+ }
  index()
  function limits(lane,m,i,v,self,player){
   const a=lane.p[i-1],length=self?.length??4.38
@@ -214,7 +225,44 @@ export function createTraffic(city){
     if(cars.some(conflicts)||(player&&conflicts(player)))yieldDistance=Math.max(0,remaining-10)
    }
   }
-  return {distance:Math.min(light,ped,gap,yieldDistance),speed:Math.min(Math.sqrt(6*Math.min(light,ped)),yieldDistance<Infinity?Math.min(5.5,Math.sqrt(5*yieldDistance)):Infinity,gap/1.8),reason:yieldDistance<Math.min(light,ped,gap)?'匯入前讓車':ped<light&&ped<gap?'停讓行人':light<gap?'等候號誌':busGap===gap&&gap<Infinity?'禮讓停靠公車':'保持跟車距離'}
+  // A ramp driver must still yield if a through car is already alongside.
+  // A more distant through driver can open a slot without stopping either lane.
+  const ownEntry=self&&movements.find(move=>move.car===self)
+  if(ownEntry){
+   const remaining=ownEntry.mergeAt-m
+   if(remaining>4&&remaining<75){
+    const occupied=c=>{
+     if(c.wait||c===self)return false
+     let distance
+     if(c.lane?.id===ownEntry.id)distance=ownEntry.at-c.m
+     else if(!c.lane&&(c.roadId===ownEntry.id||ownEntry.mainIds.includes(c.roadId))){
+      const dx=ownEntry.join.x-c.x,dn=ownEntry.join.n-c.n
+      distance=dx*Math.cos(ownEntry.join.angle)+dn*Math.sin(ownEntry.join.angle)
+     }else return false
+     return distance>-8&&distance<remaining+9&&distance<Math.max(20,(c.v??0)*4.6)
+    }
+    if(cars.some(occupied)||(player&&occupied(player)))yieldDistance=Math.min(yieldDistance,Math.max(0,remaining-21))
+   }
+  }
+  let courtesy=Infinity
+  for(const move of movements){
+   const entering=move.car
+   if(self===entering||entering.wait||entering.m>move.mergeAt+5)continue
+   const remaining=move.mergeAt-entering.m
+   if(remaining>92)continue
+   const dx=move.join.x-a[0],dn=move.join.n-a[1],co=Math.cos(move.join.angle),sn=Math.sin(move.join.angle)
+   const station=lane.mainStart!==undefined?lane.mainStart+m:m
+   const sameLane=lane.id===move.id
+   const distance=sameLane?move.at-station:dx*co+dn*sn
+   if(!sameLane&&!move.mainIds.includes(lane.id))continue
+   if(!sameLane&&(Math.abs(dx*sn-dn*co)>2.2||Math.abs(a[2]-move.join.h)>1.2||
+    Math.cos(Math.atan2(lane.p[i][1]-a[1],lane.p[i][0]-a[0])-move.join.angle)<.93))continue
+   if(distance<5||distance>145||distance<remaining+7)continue
+   // Spread the speed change across the approach and leave a two-second slot.
+   const target=Math.max(3,(distance-8)/(Math.max(0,remaining)/Math.max(5,entering.v)+2.4))
+   courtesy=Math.min(courtesy,target)
+  }
+  return {distance:Math.min(light,ped,gap,yieldDistance),speed:Math.min(courtesy,Math.sqrt(6*Math.min(light,ped)),yieldDistance<Infinity?Math.min(5.5,Math.sqrt(5*yieldDistance)):Infinity,gap/1.8),reason:courtesy<Math.min(gap/1.8,Math.sqrt(6*Math.min(light,ped)))&&yieldDistance===Infinity?'主線減速留空間':yieldDistance<Math.min(light,ped,gap)?'匯入前讓車':ped<light&&ped<gap?'停讓行人':light<gap?'等候號誌':busGap===gap&&gap<Infinity?'禮讓停靠公車':'保持跟車距離'}
  }
  function tick(dt,player){
   if(!enabled)return
@@ -249,17 +297,18 @@ export function createTraffic(city){
    }
    const lim=desired[idx],stop=c.type===4?serviceLimit(c,step,player,cars):Infinity
    const corner=c.lane.through&&Math.abs(c.m-c.lane.fork)<16?4:Infinity
-   const cruise=c.lane===merge?.lane?(c.m<c.lane.mergeAt?40:78)/3.6:c.cruise
+   const entering=movements.find(m=>m.car===c)
+   const cruise=entering?(c.m<entering.mergeAt?10:16):c.lane===merge?.lane?(c.m<c.lane.mergeAt?40:78)/3.6:c.cruise
    const target=Math.min(corner,cruise,lim.speed,Math.sqrt(4*stop))
    const previousSpeed=c.v
-   c.v+=Math.max(-4*step,Math.min(2.4*step,target-c.v))
+   c.v+=Math.max(-(lim.reason==='主線減速留空間'?1.7:4)*step,Math.min(2.4*step,target-c.v))
    const move=Math.min(c.v*step,lim.distance,stop)
    c.previous=c.m;c.v=move/step;c.braking=(previousSpeed-c.v)/step>.45||(c.v<.15&&target<.15);c.m=Math.min(c.lane.length,c.m+move);const position=point(c.lane,c.m);Object.assign(c,c.type===4?busPose(c,position,c.m):position)
    if(c.m>=c.lane.length)c.wait=true
   }
   index()
  }
- return {cars,walks,stops,stopBars,tick,get time(){return time},get enabled(){return enabled},get status(){return status},
+ return {cars,walks,stops,stopBars,tick,stage,movements,get time(){return time},get enabled(){return enabled},get status(){return status},
   get fraction(){return Math.min(1,carry/interval)},
   clearOverlap(player){
    for(const c of cars)if(Math.abs(c.h-player.h)<1.6&&Math.hypot(c.x-player.x,c.n-player.n)<(c.length+4.38)/2+3)c.wait=true
