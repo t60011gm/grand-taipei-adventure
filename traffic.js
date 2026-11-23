@@ -2,7 +2,7 @@ import {stations,resetService,busPose,serviceLimit} from './bus-service.js'
 import {crossings,detector,walkOpen,phase,stopBarWidth,world} from './crossings.js'
 import {types,randomizeScooter} from './fleet.js'
 import {roadLimit} from './speed.js'
-import {mainlineMovements} from './mainline.js'
+import {mainlineMovements} from './mainline.js?v=dense'
 export {phase}
 import {path,point} from './lane-geometry.js'
 export {path,point}
@@ -134,15 +134,22 @@ export function createTraffic(city,demonstration=false){
     cars.push({type:0,length:types[0].length,lane:turn,turn,m,previous:m,paint:2,cruise:11,v:5,wait:false,...point(turn,m)})
   }
  }
- const movements=mainlineMovements(lanes)
+ const dense=demonstration==='dense'
+ let activeMerge=null,playerProgress=0,playerSpeed=0
+ const movements=mainlineMovements(lanes,dense)
  for(const movement of movements){
   const lane=movement.lane,m=0
   const car={lane,type:1,length:types[1].length,paint:2,m,previous:m,v:8,cruise:10,wait:false,...point(lane,m)}
   movement.car=car
+  movement.queue=[car]
   cars.push(car)
+  if(dense)for(const type of [2,0]){
+   const next={...car,type,length:types[type].length,paint:type+1,dormant:true,wait:true}
+   movement.queue.push(next);cars.push(next)
+  }
  }
  // Stage repeatable starting positions only when a new demonstration leg begins.
- // From that point the three vehicles use their normal traffic controllers.
+ // Driving, following and merging then advance through the normal traffic tick.
  function stage(id){
   if(!demonstration)return
   const move=movements.find(m=>m.id===id)
@@ -153,6 +160,18 @@ export function createTraffic(city,demonstration=false){
    Object.assign(car,point(car.lane,m),{m,previous:m,v,wait:false,braking:false})
   }
   for(const c of own)if(c!==follower&&c.m>=start-100&&c.m<move.at+150)c.wait=true
+  if(dense){
+   activeMerge=move
+   move.leader=own[2];move.tail=own[1];move.follower=follower
+   const speed=move.leg.startSpeed
+   place(move.leader,start+58,speed)
+   place(follower,start-32,speed)
+   place(move.tail,start-63,speed)
+   move.order=[move.leader,move.queue[0],null,move.queue[1],follower,move.queue[2],move.tail]
+   move.queue.forEach((c,i)=>{c.dormant=false;place(c,move.mergeAt-76-i*40,8)})
+   playerProgress=start-move.at;playerSpeed=speed
+   index();return
+  }
   place(follower,start-42,move.leg.startSpeed)
   place(move.car,Math.max(0,move.mergeAt-95),6)
   move.follower=follower
@@ -227,8 +246,8 @@ export function createTraffic(city,demonstration=false){
   }
   // A ramp driver must still yield if a through car is already alongside.
   // A more distant through driver can open a slot without stopping either lane.
-  const ownEntry=self&&movements.find(move=>move.car===self)
-  if(ownEntry){
+  const ownEntry=self&&movements.find(move=>move.queue.includes(self))
+  if(ownEntry&&(!dense||ownEntry!==activeMerge)){
    const remaining=ownEntry.mergeAt-m
    if(remaining>4&&remaining<75){
     const occupied=c=>{
@@ -246,6 +265,7 @@ export function createTraffic(city,demonstration=false){
   }
   let courtesy=Infinity
   for(const move of movements){
+   if(dense&&move===activeMerge)continue
    const entering=move.car
    if(self===entering||entering.wait||entering.m>move.mergeAt+5)continue
    const remaining=move.mergeAt-entering.m
@@ -262,10 +282,33 @@ export function createTraffic(city,demonstration=false){
    const target=Math.max(3,(distance-8)/(Math.max(0,remaining)/Math.max(5,entering.v)+2.4))
    courtesy=Math.min(courtesy,target)
   }
+  // Alternate the two queues. The assigned predecessor is a moving target:
+  // use its arrival time before the taper and its actual clearance afterwards.
+  if(dense&&activeMerge){
+   const move=activeMerge,ranks=move.queue,idx=ranks.indexOf(self)
+   const guided=!self&&lane.id===move.id
+   const order=move.order
+   const rank=guided?2:order.indexOf(self)
+   if(rank>0){
+    const leader=order[rank-1]
+    const station=idx>=0?m-move.mergeAt:guided?move.leg.mainStart+m-move.at:m-move.at
+    const ahead=leader===null?playerProgress:ranks.includes(leader)?leader.m-move.mergeAt:leader.m-move.at
+    const speed=leader===null?playerSpeed:leader.v
+    if(station<80&&!leader?.wait){
+     const clearance=ahead-station-(length+(leader?.length??4.38))/2-3
+     const eta=Math.max(0,-ahead)/Math.max(3,speed)
+     const target=ahead<0?Math.max(2,(-station-10)/(eta+2.2)):Math.max(0,clearance/1.7)
+     courtesy=Math.min(courtesy,target)
+    }
+   }
+  }
   return {distance:Math.min(light,ped,gap,yieldDistance),speed:Math.min(courtesy,Math.sqrt(6*Math.min(light,ped)),yieldDistance<Infinity?Math.min(5.5,Math.sqrt(5*yieldDistance)):Infinity,gap/1.8),reason:courtesy<Math.min(gap/1.8,Math.sqrt(6*Math.min(light,ped)))&&yieldDistance===Infinity?'主線減速留空間':yieldDistance<Math.min(light,ped,gap)?'匯入前讓車':ped<light&&ped<gap?'停讓行人':light<gap?'等候號誌':busGap===gap&&gap<Infinity?'禮讓停靠公車':'保持跟車距離'}
  }
  function tick(dt,player){
   if(!enabled)return
+  if(activeMerge&&player.roadId===activeMerge.id){
+   playerProgress=activeMerge.leg.mainStart+player.roadProgress-activeMerge.at;playerSpeed=player.v
+  }
   time+=dt;carry+=dt
   if(carry<.075)return
   const step=carry;interval=step;carry=0
@@ -289,6 +332,7 @@ export function createTraffic(city,demonstration=false){
   }
   const desired=cars.map(c=>limits(c.lane,c.m,c.i,c.v,c,player))
   for(const [idx,c] of cars.entries()){
+   if(c.dormant)continue
    if(c.wait){
     const start=point(c.lane,0)
     if(Math.hypot(start.x-player.x,start.n-player.n)<85||cars.some(other=>other!==c&&!other.wait&&(other.lane.through??other.lane)===(c.lane.through??c.lane)&&other.m<24))continue
@@ -297,7 +341,7 @@ export function createTraffic(city,demonstration=false){
    }
    const lim=desired[idx],stop=c.type===4?serviceLimit(c,step,player,cars):Infinity
    const corner=c.lane.through&&Math.abs(c.m-c.lane.fork)<16?4:Infinity
-   const entering=movements.find(m=>m.car===c)
+   const entering=movements.find(m=>m.queue.includes(c))
    const cruise=entering?(c.m<entering.mergeAt?10:16):c.lane===merge?.lane?(c.m<c.lane.mergeAt?40:78)/3.6:c.cruise
    const target=Math.min(corner,cruise,lim.speed,Math.sqrt(4*stop))
    const previousSpeed=c.v

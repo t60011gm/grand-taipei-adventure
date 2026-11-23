@@ -3,8 +3,8 @@ import {intersections} from './crossings.js'
 import {createBusAudio} from './bus-audio.js'
 import {returnWalk} from './return-walk.js'
 import {passengerService} from './passenger.js'
-import {mainlineMovements} from './mainline.js'
-import {createTraffic} from './traffic.js?v=mainline'
+import {mainlineMovements} from './mainline.js?v=dense'
+import {createTraffic} from './traffic.js?v=dense'
 import {installTraffic} from './traffic-scene.js'
 import {planTour,createTour,interchangeTour} from './tour.js?v=mainline'
 import {createMinimap} from './minimap.js'
@@ -61,9 +61,10 @@ async function run(){
   if(!response.ok)throw Error('導覽車道路線載入失敗')
   city.tourLanes=await response.json()
  }
- const mainline=params.get('tour')==='mainline'
+ const denseTraffic=params.get('tour')==='dense-merges'
+ const mainline=denseTraffic||params.get('tour')==='mainline'
  const interchange=mainline||params.get('tour')==='interchanges'
- const tourRoute=mainline?mainlineMovements(city.tourLanes).map(m=>m.leg):interchange?interchangeTour(city):params.get('tour')==='all'?planTour(city):null
+ const tourRoute=mainline?mainlineMovements(city.tourLanes,denseTraffic).map(m=>m.leg):interchange?interchangeTour(city):params.get('tour')==='all'?planTour(city):null
  let tour=tourRoute&&createTour(tourRoute),tourSpeed=1
  const arcadeVisit=params.get('walk')==='guangfu'&&!approach&&!feeder
  const returnDrive=params.get('drive')==='guangfu'
@@ -96,7 +97,7 @@ async function run(){
  for(const [x,y,r] of [...city.transport.piers,...(city.transport.parked??[])])city.columns.push([x,-y,r])
  const lastChunk=city.chunks.length-1
  const blockAt=x=>clamp(Math.floor((x-west.start)/100),0,lastChunk)
- const traffic=createTraffic(city,mainline),returnStart=params.get('bus')==='669-return',busStart=(params.get('bus')==='669'||returnStart)&&!tour&&!approach&&!feeder&&!arcadeVisit&&!bridgeDrive
+ const traffic=createTraffic(city,denseTraffic?'dense':mainline),returnStart=params.get('bus')==='669-return',busStart=(params.get('bus')==='669'||returnStart)&&!tour&&!approach&&!feeder&&!arcadeVisit&&!bridgeDrive
  if(busStart){
   const s=traffic.stops.find(s=>s.route==='669'&&s.destination==='市政府'&&s.name==='華山公園(市民)')
   city.startPedestrian={x:s.poleX+.9*Math.cos(s.angle)+.6*Math.sin(s.angle),z:-s.poleN-.9*Math.sin(s.angle)+.6*Math.cos(s.angle),yaw:-s.angle}
@@ -427,7 +428,7 @@ async function run(){
    const delta=tour?dt*tourSpeed:dt
    for(let t=0;t<delta;t+=1/90){
     const step=Math.min(delta-t,1/90)
-    if(traffic.enabled)traffic.tick(step,{x:game.car.x,n:-game.car.z,v:game.car.v,angle:-game.car.yaw,roadId:game.car.roadId,h:game.car.roadHeight??game.sample(game.car.x,1)})
+    if(traffic.enabled)traffic.tick(step,{x:game.car.x,n:-game.car.z,v:game.car.v,roadProgress:game.car.roadProgress,angle:-game.car.yaw,roadId:game.car.roadId,h:game.car.roadHeight??game.sample(game.car.x,1)})
     if(tour){
      const transferring=tour.transfer
      tour.tick(game.car,step,traffic.enabled?traffic:null)
