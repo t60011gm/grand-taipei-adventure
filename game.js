@@ -3,9 +3,9 @@ import {intersections} from './crossings.js'
 import {createBusAudio} from './bus-audio.js'
 import {returnWalk} from './return-walk.js'
 import {passengerService} from './passenger.js'
-import {createTraffic} from './traffic.js'
+import {createTraffic} from './traffic.js?v=interchanges'
 import {installTraffic} from './traffic-scene.js'
-import {planTour,createTour} from './tour.js?v=signals2'
+import {planTour,createTour,interchangeTour} from './tour.js?v=interchanges'
 import {createMinimap} from './minimap.js'
 import * as T from './vendor/three.js'
 import {GLTFLoader} from './vendor/loaders/GLTFLoader.js'
@@ -60,7 +60,8 @@ async function run(){
   if(!response.ok)throw Error('導覽車道路線載入失敗')
   city.tourLanes=await response.json()
  }
- const tourRoute=params.get('tour')==='all'?planTour(city):null
+ const interchange=params.get('tour')==='interchanges'
+ const tourRoute=interchange?interchangeTour(city):params.get('tour')==='all'?planTour(city):null
  let tour=tourRoute&&createTour(tourRoute),tourSpeed=1
  const arcadeVisit=params.get('walk')==='guangfu'&&!approach&&!feeder
  const returnDrive=params.get('drive')==='guangfu'
@@ -256,7 +257,7 @@ async function run(){
   localStorage.setItem('civicTraffic',on?'on':'off')
   $('traffic').setAttribute('aria-pressed',String(on));$('traffic').textContent='交通模擬　'+(on?'開':'關');$('menuTraffic').checked=on
  }
- setTraffic(busStart||localStorage.getItem('civicTraffic')!=='off')
+ setTraffic(interchange||busStart||localStorage.getItem('civicTraffic')!=='off')
  $('traffic').onclick=()=>setTraffic(!traffic.enabled)
  $('menuTraffic').onchange=()=>setTraffic($('menuTraffic').checked)
  let gender=localStorage.getItem('civicHero')==='male'?'male':'female'
@@ -273,7 +274,8 @@ async function run(){
  const glow=new T.Mesh(new T.RingGeometry(.80,1.02,48),new T.MeshBasicMaterial({color:0xfcb651,side:T.DoubleSide,depthWrite:false}));glow.rotation.x=-Math.PI/2;scene.add(glow)
  let driverView=Boolean(tour)||bridgeDrive,firstPerson=false,zoom=1,paused=true,orbit=0,pitch=.17,last=0,clock=0,drag=null,started=false
  const savedView=localStorage.getItem('civicTourView')
- if(tour&&savedView)driverView=savedView==='driver'
+ if(interchange)driverView=false
+ else if(tour&&savedView)driverView=savedView==='driver'
  function updateViewChoice(){
   $('tourView').textContent='視角：'+(driverView?'駕駛座':'車後第三人稱')
   if(tour)localStorage.setItem('civicTourView',driverView?'driver':'rear')

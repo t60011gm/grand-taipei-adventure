@@ -171,3 +171,57 @@ export function createTour(route){
  return {tick,place:car=>pose(car,0),total,get completed(){return completed},get done(){return done},
   get label(){return route[i].label},get transfer(){return hold>0},get meters(){return elapsedDistance}}
 }
+
+export function interchangeTour(city){
+ const l=city.tourLanes, route=[]
+ const main={東:l['civic-1'],西:l.civic1.slice().reverse(),新北:['51362361','260152357'].flatMap(k=>l[k]),新南:['50289495','1079151555','244450513'].flatMap(k=>l[k]),建北:['910567292','910567291'].flatMap(k=>l[k]),建南:['910959595','252657373','252657374'].flatMap(k=>l[k])}
+ const drives=[
+ ['市民高架｜新生南路入口','西',1,'-51362368 -51362403 51362366'],
+ ['市民高架｜新生南路出口','東',0,'51362367 51362403 51362368'],
+ ['新生高架｜八德路北向入口','新北',1,'51362398 1132433053'],
+ ['新生高架｜長安東路北向出口','新北',0,'1132431808 51289047'],
+ ['新生高架｜長安東路南向入口','新南',1,'51362434 1132431141'],
+ ['新生高架｜八德路南向出口','新南',0,'1132433052 51362381'],
+ ['市民高架｜建國南路入口','東',1,'49073264 593852344 49073265 49073263'],
+ ['市民高架｜建國南路出口','西',0,'49073277 -49073265 -593852344 593852343'],
+ ['建國高架｜忠孝東路北向入口','建北',1,'49073297'],
+ ['建國高架｜長安東路北向出口','建北',0,'49710833'],
+ ['建國高架｜長安東路南向入口','建南',1,'49710834'],
+ ['建國高架｜忠孝東路南向出口','建南',0,'48794890']]
+ const dist=distance
+ for(const [label,key,entry,ids] of drives){
+  const parts=ids.split(' ').map(raw=>{
+   const id=raw.replace('-','')
+   let p=l[id]
+   if(raw.startsWith('-')){
+    p=p.slice().reverse().map((v,i,points)=>{
+     const next=points[Math.min(points.length-1,i+1)],prev=points[Math.max(0,i-1)]
+     const angle=Math.atan2(next[1]-prev[1],next[0]-prev[0])
+     return [v[0]+3.4*Math.sin(angle),v[1]-3.4*Math.cos(angle),v[2]]
+    })
+   }
+   return {id,p,kind:'ramp'}
+  })
+  const target=entry?parts.at(-1).p.at(-1):parts[0].p[0],through=main[key],idx=through.reduce((best,p,i)=>dist(p,target)<dist(through[best],target)?i:best,0)
+  let end=idx;while(through[end+(entry?1:-1)]&&dist(through[end],target)<155)end+=entry?1:-1
+  const mainLeg={id:({東:'civic-1',西:'civic1',新北:'51362361',新南:'244450513',建北:'910567291',建南:'252657373'})[key],kind:key.length===1?'main':'cross',p:through.slice(Math.min(idx,end),Math.max(idx,end)+1)}
+  if(entry)parts.push(mainLeg);else parts.unshift(mainLeg)
+  // Use the centre of the narrower branch as the common endpoint.
+  // Carry the lane change on the wider carriageway on either side.
+  for(const part of parts)part.p=part.p.map(v=>v.slice())
+  const width=part=>city.transport.roads.find(r=>r.id===part.id).w
+  for(let i=1;i<parts.length;i++){
+   const prev=parts[i-1],next=parts[i],end=prev.p.at(-1),start=next.p[0]
+   const joint=width(prev)<=width(next)?end:start
+   for(const [part,anchor] of [[prev,end],[next,start]]){
+    const delta=joint.map((v,k)=>v-anchor[k])
+    part.p=part.p.map(v=>{const t=Math.min(1,dist(v,anchor)/30);return v.map((w,k)=>w+delta[k]*(1-t*t*(3-2*t)))})
+   }
+  }
+  for(const [i,part] of parts.entries()){
+   const leg=segment({...part,label},part.p)
+   route.push({...leg,visit:true,transfer:i===0&&route.length>0})
+  }
+ }
+ return route
+}

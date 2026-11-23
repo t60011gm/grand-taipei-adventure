@@ -88,6 +88,27 @@ export function createTraffic(city){
   const ix=main.p.findIndex(p=>p[0]<=end[0])
   merge={...point(main,main.s[ix]),mainAt:main.s[ix],lane};extra.set('光復西向匯入',lane)
  }
+ // Each entry has its own receiving carriageway, including the two levels
+ // of the interchange. Measure approaching traffic along that carriageway.
+ const entries=new Map()
+ for(const [id,mainId] of [
+  ['51362366','civic1'],['49073263','civic-1'],['1132433053','新生北向'],
+  ['1132431141','新生南向'],['49073297','建國北向'],['49710834','建國南向']
+ ]){
+  if(!lanes[id])continue
+  const main=extra.get(mainId)??(lanes[mainId]&&path(mainId==='civic1'?lanes[mainId].slice().reverse():lanes[mainId]))
+  if(!main)continue
+  const end=lanes[id].at(-1)
+  let best=Infinity,station=0
+  for(let i=1;i<main.p.length;i++){
+   const a=main.p[i-1],b=main.p[i],dx=b[0]-a[0],dn=b[1]-a[1],sq=dx*dx+dn*dn
+   if(!sq)continue
+   const t=Math.max(0,Math.min(1,((end[0]-a[0])*dx+(end[1]-a[1])*dn)/sq))
+   const d=Math.hypot(a[0]+t*dx-end[0],a[1]+t*dn-end[1],a[2]+t*(b[2]-a[2])-end[2])
+   if(d<best){best=d;station=main.s[i-1]+t*(main.s[i]-main.s[i-1])}
+  }
+  entries.set(id,{mainId,station,end})
+ }
  for(const id of ['civic-1','civic1','tourSurface-1','tourSurface1','GFsurfaceG1','GFsurfaceG-1','GFsurfaceC1','GFsurfaceC-1','GFsurfaceB',...extra.keys()]){
   const p=city.tourLanes[id];if(!p&&!extra.has(id))continue
   const lane=extra.get(id)??path(['civic1','tourSurface1','GFsurfaceC1','GFsurfaceG-1'].includes(id)?p.slice().reverse():p)
@@ -164,6 +185,18 @@ export function createTraffic(city){
   }
   if(player)check(player)
   let yieldDistance=Infinity
+  const entry=entries.get(lane.id)
+  if(entry){
+   const end=lane.p.at(-1),remaining=lane.length-m
+   if(remaining>8&&remaining<72&&Math.hypot(end[0]-entry.end[0],end[1]-entry.end[1])<6){
+    const conflict=cars.some(c=>{
+     if(c.wait||c.lane.id!==entry.mainId)return false
+     const d=entry.station-c.m
+     return d>-(c.length+length)/2-3&&d<Math.max(16,c.v*4.8)
+    })
+    if(conflict)yieldDistance=Math.max(0,remaining-15)
+   }
+  }
   if(merge&&(lane===merge.lane||lane.id==='guangfuWest')){
    const remaining=(lane.mergeAt??lane.length)-m
    if(remaining>8&&remaining<56){
